@@ -46,10 +46,18 @@ function bump(current, kind) {
 
 function run(cmd, args, opts = {}) {
   console.log(`\n$ ${cmd} ${args.join(" ")}`);
-  return execFileSync(cmd, args, {
+  // shell:true 时 Node 只是用空格把 argv 拼成命令行、不加引号，含空格的参数会被拆开。
+  // 例如 `--title Token v0.1.2` 会被拆成 `--title Token` + 多出来的 `v0.1.2`，
+  // 而 gh release create 把位置参数当**产物 glob** ⇒ 报 `no matches found for `v0.1.2`` 而发版失败。
+  // 所以自己给含空格的参数补引号。
+  const shell = process.platform === "win32";
+  const finalArgs = shell
+    ? args.map((a) => (/[\s"]/.test(a) ? `"${String(a).replace(/"/g, '\\"')}"` : a))
+    : args;
+  return execFileSync(cmd, finalArgs, {
     cwd: root,
     stdio: opts.capture ? ["ignore", "pipe", "inherit"] : "inherit",
-    shell: process.platform === "win32",
+    shell,
     encoding: "utf8"
   });
 }

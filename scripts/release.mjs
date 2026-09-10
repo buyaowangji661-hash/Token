@@ -28,7 +28,9 @@ const valueOf = (flag) => {
 };
 
 const pkg = JSON.parse(fs.readFileSync(pkgPath, "utf8"));
-const publish = pkg.build?.publish;
+// electron-builder 的 publish 既可以是对象也可以是数组（本项目是数组）。
+// 之前直接取 publish?.owner，数组上没有 owner ⇒ 脚本必然报错退出，任何版本都发不出去。
+const publish = Array.isArray(pkg.build?.publish) ? pkg.build.publish[0] : pkg.build?.publish;
 if (!publish?.owner || !publish?.repo) {
   console.error("package.json 里缺少 build.publish.owner / repo，无法发版。");
   process.exit(1);

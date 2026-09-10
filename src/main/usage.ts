@@ -156,9 +156,12 @@ function matchRecordedModel(reportModels: string[], recordedKey: string): string
 
 export async function fetchUsage(period: Period, signal?: AbortSignal): Promise<UsageResult> {
   const startedAt = Date.now();
+  // 扫描只要 token 数，金额由 app 按定价目录自算 ⇒ 告诉 tokscale 别去联网拉定价目录。
+  // 在 raw.githubusercontent.com / models.dev 不通的机器上，这一步把扫描从 ~33s 压到 ~0.2s
+  // （实测口径：陈旧缓存 33.0s → 0.25s、空缓存 33.0s → 2.2s，用量数字逐行一致）。
   const report = await runTokscaleJson<Report>(
     ["--json", "--client", CLIENT_IDS.join(","), "--group-by", "client,model", ...periodArgs(period), "--no-spinner"],
-    { timeoutMs: 300_000, signal }
+    { timeoutMs: 300_000, signal, extraEnv: { TOKSCALE_PRICING_CACHE_ONLY: "1" } }
   );
 
   const rows = (report.entries ?? []).filter((row) => CLIENT_IDS.includes(row.client as ClientId));

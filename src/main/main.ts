@@ -2,7 +2,9 @@ import { app, BrowserWindow, ipcMain, Menu, nativeImage, screen, shell, Tray } f
 import fs from "node:fs";
 import path from "node:path";
 import type { AppConfig, Period, ThemeName, UsageResult } from "../shared/types";
+import { syncAntigravity } from "./antigravity";
 import { configPath, pricingPath, pricingPathExists, readConfig, readPricingFile, writeConfig } from "./config";
+import { catalogStatus, ensureCatalogFresh, refreshCatalog } from "./priceCatalog";
 import { clearPriceCache, getPrice } from "./pricing";
 import { tokscaleVersion } from "./tokscale";
 import { checkForUpdates, installUpdate, setupUpdater, updateStatus } from "./updater";
@@ -15,6 +17,9 @@ const WINDOW_HEIGHT = 680;
 let win: BrowserWindow | null = null;
 let tray: Tray | null = null;
 let refreshTimer: NodeJS.Timeout | null = null;
+/** 后台维护定时器：Antigravity 抓取与定价目录刷新 */
+let antigravityTimer: NodeJS.Timeout | null = null;
+let catalogTimer: NodeJS.Timeout | null = null;
 let tokscaleVersionText = "未知";
 let scanAbort: AbortController | null = null;
 /** 渲染层最近一次请求的周期；后台定时刷新沿用该周期，避免把「本月」数据推到「今日/近 7 天」视图 */
@@ -224,6 +229,9 @@ async function runScan(period: Period, notify: boolean): Promise<UsageResult | n
   const controller = new AbortController();
   scanAbort = controller;
   try {
+    // 扫描前先把定价目录续到有效窗口（本地操作，毫秒级）。这样后面逐模型询价都是纯本地命中，
+    // 不会因为目录过期而联网等 30s —— 换台机器「切周期要转很久」就是这么消掉的。
+    ensureCatalogFresh();
     const result = await fetchUsage(period, controller.signal);
     if (controller.signal.aborted) return null;
     if (notify) win?.webContents.send("usage-updated", result);
@@ -250,6 +258,48 @@ function scheduleRefresh(): void {
   refreshTimer = setInterval(() => {
     void runScan(lastPeriod, true);
   }, intervalMs);
+}
+
+const SIX_HOURS_MS = 6 * 60 * 60 * 1000;
+
+/**
+ * 启动后稍等一会儿再干活：首屏要先把用量扫出来，别让后台任务抢 I/O。
+ * 每个任务都是「先做一次、之后定时」。
+ */
+function scheduleMaintenance(): void {
+  const kickoff = (fn: () => void, delayMs: number) => setTimeout(fn, delayMs);
+
+  // Antigravity：只存在于运行中的语言服务器里，必须主动 sync 才有数据
+  kickoff(() => {
+    void syncAntigravity().then((result) => {
+      if (process.env.TOKEN_DEBUG_DUMP) {
+        console.log(
+          `[antigravity] sync ok=${result.ok} sessions=${result.cachedSessions} ${result.ms}ms ${result.detail}`
+        );
+      }
+      // 抓到新数据就顺手重扫一次，界面不用等下一次定时刷新
+      if (result.ok) void runScan(lastPeriod, true);
+    });
+    if (antigravityTimer) clearInterval(antigravityTimer);
+    antigravityTimer = setInterval(() => {
+      void syncAntigravity().then((result) => {
+        if (result.ok) void runScan(lastPeriod, true);
+      });
+    }, SIX_HOURS_MS);
+  }, 8_000);
+
+  // 定价目录：后台真联网刷新，失败就把时间戳续上（切档路径永远不碰网络）
+  kickoff(() => {
+    void refreshCatalog().then((result) => {
+      if (process.env.TOKEN_DEBUG_DUMP) {
+        console.log(`[catalog] refreshed=${result.refreshed} ${result.ms}ms ${result.detail}`);
+      }
+    });
+    if (catalogTimer) clearInterval(catalogTimer);
+    catalogTimer = setInterval(() => {
+      void refreshCatalog();
+    }, SIX_HOURS_MS);
+  }, 20_000);
 }
 
 function registerIpc(): void {
@@ -350,10 +400,19 @@ if (!gotLock) {
   app.whenReady().then(async () => {
     tokscaleVersionText = await tokscaleVersion();
     applyAutostart(readConfig().autostart);
+    // 定价目录必须在任何扫描之前就位：缺文件时用随包快照播种、时间戳续到有效窗口
+    const catalog = ensureCatalogFresh(true);
+    if (process.env.TOKEN_DEBUG_DUMP) {
+      console.log(`[catalog] 启动检查 dir=${catalog.dir} seeded=[${catalog.seeded}] renewed=[${catalog.renewed}]`);
+      for (const row of catalogStatus()) {
+        console.log(`[catalog]   ${row.name} age=${row.ageMinutes}min entries=${row.entries}`);
+      }
+    }
     registerIpc();
     createWindow();
     createTray();
     scheduleRefresh();
+    scheduleMaintenance();
     setupUpdater((status) => win?.webContents.send("update-status", status));
     showWindow();
   });

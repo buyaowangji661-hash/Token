@@ -41,6 +41,13 @@ export function resolveTokscaleBinary(): string {
 export type RunOptions = {
   timeoutMs?: number;
   signal?: AbortSignal;
+  /**
+   * 追加/覆盖子进程环境变量。
+   * 用量扫描要带 TOKSCALE_PRICING_CACHE_ONLY=1（只要 token 数、不要它算金额），
+   * 这样扫描路径不会联网拉定价目录 —— 在 raw.githubusercontent.com 不通的机器上
+   * 能把一次扫描从 33s 压到 0.2s。
+   */
+  extraEnv?: Record<string, string>;
 };
 
 export function runTokscale(args: string[], options: RunOptions = {}): Promise<string> {
@@ -49,7 +56,7 @@ export function runTokscale(args: string[], options: RunOptions = {}): Promise<s
   return new Promise((resolve, reject) => {
     const child = spawn(binary, args, {
       windowsHide: true,
-      env: { ...process.env, NO_COLOR: "1" }
+      env: { ...process.env, NO_COLOR: "1", ...options.extraEnv }
     });
     let stdout = "";
     let stderr = "";

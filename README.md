@@ -57,7 +57,7 @@ tokscale pricing <model> --json       # 单模型单价
 npm install
 npm run build          # 主进程 tsc + 渲染层 vite
 npm start              # 启动（托盘常驻）
-npm run dist           # 打包 nsis + 便携 exe 到 release/
+npm run dist           # 打包 nsis 安装版到 release/（先刷新价格快照）
 ```
 
 自检脚本（不启动 Electron）：
@@ -100,4 +100,28 @@ npm run release -- --skip-build
 ```
 
 
+## 定价目录与「换台电脑切周期就很慢」
+
+tokscale 的定价目录靠联网拉三个上游（LiteLLM / OpenRouter / Models.dev），缓存只认 **1 小时**。
+在 `raw.githubusercontent.com` 或 `models.dev` 不通的网络里，重拉要等满 **30 秒**超时，而且失败后
+**不刷新时间戳** ⇒ 每次切周期都再等一遍（不是"只有第一次慢"）。实测那台机器：切一次档
+**196.4s**（主扫描 77.1s + 逐模型询价 119.3s）。
+
+三个措施让切档路径彻底不碰网络（实测冷机 + 三源全黑洞：**718ms**，用户路径联网 **0 次**）：
+
+1. **扫描注入 `TOKSCALE_PRICING_CACHE_ONLY=1`** —— app 只取 token 数、金额自己算，所以主扫描
+   不需要定价目录（77s → 0.2s）。
+2. **`priceCatalog.ts` 维持目录新鲜** —— 时间戳超出 `[now-50min, now]` 就本地续期（未来时间戳
+   同样无效，也一并续）；缺文件用随包快照 `resources/pricing-snapshot.json.gz` 播种。**关键：
+   任何一路目录文件缺失或陈旧，都会让 tokscale 为「连目录里都没有的模型」也去联网等满超时。**
+3. **联网刷新挪到后台 + 隔离镜像目录** —— `refreshCatalog()` 在 `userData/catalog-refresh` 里把
+   时间戳改老来逼 tokscale 重拉，只把上游确实重写过的文件原子搬回线上。线上目录自始至终新鲜，
+   所以后台刷新随时可跑、不影响前台（早期版本直接改线上文件，导致前台询价撞上陈旧目录又卡 20s）。
+
+另外 **`antigravity sync`**：Antigravity 用量只存在于运行中的语言服务器里，必须先 sync 才有数据。
+app 过去从不调它，缓存停在很久以前（实测那台机器 `last synced` 停在十几天前）。现在启动后 8 秒
+跑一次、之后每 6 小时一次。
+
+注意两个反直觉点（都实测过）：`TOKSCALE_PRICING_CACHE_ONLY` **对 `pricing` 子命令无效**
+（只对主扫描有效）；`antigravity-cache` 里的 `sync.lock` 残留**无害**，带锁 sync 照样成功。
 

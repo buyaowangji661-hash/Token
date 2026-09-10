@@ -1,7 +1,7 @@
 {
   "name": "token",
   "productName": "Token",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "private": true,
   "description": "Token 用量监控 — Hermes / Codex / Antigravity / Grok",
   "main": "dist/main/main.js",
@@ -12,10 +12,11 @@
     "build:main": "tsc -p tsconfig.main.json",
     "build:renderer": "vite build",
     "build": "npm run build:main && npm run build:renderer",
+    "snapshot": "node scripts/make-snapshot.mjs",
     "start": "electron .",
     "dev": "vite",
     "pack": "npm run build && electron-builder --win --x64 --dir",
-    "dist": "npm run build && electron-builder --win --x64 --publish never",
+    "dist": "npm run snapshot && npm run build && electron-builder --win --x64 --publish never",
     "release": "node scripts/release.mjs"
   },
   "dependencies": {
@@ -52,6 +53,12 @@
       "dist/**/*",
       "assets/**/*",
       "package.json"
+    ],
+    "extraResources": [
+      {
+        "from": "resources/pricing-snapshot.json.gz",
+        "to": "pricing-snapshot.json.gz"
+      }
     ],
     "asarUnpack": [
       "node_modules/tokscale/**/*",

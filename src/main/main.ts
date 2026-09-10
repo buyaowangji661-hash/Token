@@ -13,6 +13,8 @@ import { fetchUsage } from "./usage";
 const DEV_URL = process.env.TOKEN_DEV_URL;
 const WINDOW_WIDTH = 380;
 const WINDOW_HEIGHT = 680;
+/** 显示面板时，数据超过这个岁数就先静默重扫（避免频繁开合面板时反复扫描） */
+const SHOW_REFRESH_STALE_MS = 15_000;
 
 let win: BrowserWindow | null = null;
 let tray: Tray | null = null;
@@ -24,6 +26,8 @@ let tokscaleVersionText = "未知";
 let scanAbort: AbortController | null = null;
 /** 渲染层最近一次请求的周期；后台定时刷新沿用该周期，避免把「本月」数据推到「今日/近 7 天」视图 */
 let lastPeriod: Period = "week";
+/** 最近一次扫描完成时刻：用于「显示面板时若数据已陈旧就先刷一次」的判定 */
+let lastScanAt = 0;
 
 function assetPath(file: string): string {
   return path.join(__dirname, "..", "..", "assets", file);
@@ -95,6 +99,23 @@ function createWindow(): void {
       event.preventDefault();
       win?.hide();
     }
+  });
+
+  // 面板重新显示时刷新一次，让用户每次打开看到的都是刚扫的数据，
+  // 而不是从托盘弹出几分钟前的旧结果（看着像「数字不动」）。
+  // 用 runScan(notify=true) 而不是让渲染层重发 fetch_usage：后者会把界面切回 loading 闪一下。
+  // 不看刷新间隔做陈旧判定：后台定时器本身就在按该间隔扫描，数据几乎永远不会「比间隔还旧」，
+  // 那样写等于这次刷新基本不会触发。改用固定 15 秒下限，只在开合很频繁时省掉重复扫描。
+  // 启动首发不在此列（lastScanAt 还是 0），首屏由渲染层自己的 fetch_usage 负责，避免重复扫两遍。
+  win.on("show", () => {
+    if (lastScanAt === 0) return;
+    if (!readConfig().autoRefreshEnabled) return;
+    const ageMs = Date.now() - lastScanAt;
+    if (process.env.TOKEN_DEBUG_DUMP) {
+      console.log(`[show] age=${Math.round(ageMs / 1000)}s -> ${ageMs < SHOW_REFRESH_STALE_MS ? "跳过" : "重扫"}`);
+    }
+    if (ageMs < SHOW_REFRESH_STALE_MS) return;
+    void runScan(lastPeriod, true);
   });
 
   if (DEV_URL) {
@@ -234,6 +255,7 @@ async function runScan(period: Period, notify: boolean): Promise<UsageResult | n
     ensureCatalogFresh();
     const result = await fetchUsage(period, controller.signal);
     if (controller.signal.aborted) return null;
+    lastScanAt = Date.now();
     if (notify) win?.webContents.send("usage-updated", result);
     return result;
   } catch (error) {

@@ -31,16 +31,19 @@ import {
   type ClientId,
   type ClientUsage,
   type Period,
+  type ThemeName,
   type UpdateStatus,
   type UsageResult
 } from "../shared/types";
 import { invoke, listen } from "./tauri-shim";
+import { SKINS, THEME_STORAGE_KEY } from "./theme";
+import type { Skin } from "./theme";
 import "./styles.css";
 import "./extra.css";
+import "./theme.css";
 
 type ViewName = "dashboard" | "settings";
 type LoadState = "loading" | "ok" | "error";
-type ThemeName = "dark" | "light";
 
 const CLIENT_THEMES: Record<ClientId, { label: string; dotClass: string }> = {
   codex: { label: "Codex", dotClass: "dot-codex" },
@@ -89,6 +92,28 @@ const hitRateOf = (tokens: { cacheRead: number; input: number }) => {
   return Math.round((cached / (cached + uncached)) * 100);
 };
 
+// 皮肤菜单里的一枚色卡：用面板底/强调色/卡片底/文字色拼一个小预览
+function SkinSwatch({ skin }: { skin: Skin }) {
+  const [panel, accent, card, text] = skin.swatch;
+  return (
+    <span className="skin-swatch" aria-hidden="true" style={{ background: panel }}>
+      <span className="skin-swatch-card" style={{ background: card, borderColor: text }} />
+      <span className="skin-swatch-accent" style={{ background: accent }} />
+    </span>
+  );
+}
+
+// 与 index.html 内联脚本保持同一读法：只认白名单里的 id，其余一律回落默认
+function readStoredTheme(): ThemeName {
+  let saved: string | null = null;
+  try {
+    saved = localStorage.getItem(THEME_STORAGE_KEY);
+  } catch {
+    saved = null;
+  }
+  return SKINS.some((skin) => skin.id === saved) ? (saved as ThemeName) : "light";
+}
+
 function CircularProgress({
   percent,
   color = "var(--brand)"
@@ -111,7 +136,7 @@ function CircularProgress({
           cy={size / 2}
           r={radius}
           fill="none"
-          stroke="rgba(255, 255, 255, 0.12)"
+          stroke="var(--gauge-track)"
           strokeWidth={strokeWidth}
         />
         {percent !== null && (
@@ -143,9 +168,9 @@ function App() {
   const [loadError, setLoadError] = React.useState("");
   const [config, setConfig] = React.useState<AppConfig | null>(null);
   const [update, setUpdate] = React.useState<UpdateStatus | null>(null);
-  const [theme, setTheme] = React.useState<ThemeName>(
-    () => (localStorage.getItem("token-theme") === "light" ? "light" : "dark")
-  );
+  // 初值只作兜底：index.html 的内联脚本已经读同一份 localStorage 把 data-theme 设好了，
+  // 下面这个读法必须与它一致，否则首帧之后再被 setTheme 改成另一套 = 闪一下。
+  const [theme, setTheme] = React.useState<ThemeName>(() => readStoredTheme());
   const periodRef = React.useRef(period);
   periodRef.current = period;
 
@@ -176,7 +201,7 @@ function App() {
         setConfig(next);
         setUpdate(next.update ?? null);
         setTheme(next.theme);
-        localStorage.setItem("token-theme", next.theme);
+        localStorage.setItem(THEME_STORAGE_KEY, next.theme);
       })
       .catch(() => undefined);
   }, []);
@@ -203,12 +228,11 @@ function App() {
     return () => offs.forEach((off) => off());
   }, [loadUsage]);
 
-  const toggleTheme = React.useCallback(() => {
-    const next: ThemeName = theme === "dark" ? "light" : "dark";
+  const pickTheme = React.useCallback((next: ThemeName) => {
     setTheme(next);
-    localStorage.setItem("token-theme", next);
+    localStorage.setItem(THEME_STORAGE_KEY, next);
     void invoke<AppConfig>("save_theme", { theme: next }).catch(() => undefined);
-  }, [theme]);
+  }, []);
 
   // 设置页「折算价格」用：当前周期出现过的模型，按 token 降序
   const modelList = React.useMemo(() => {
@@ -236,7 +260,7 @@ function App() {
           onPeriod={setPeriod}
           onSelectClient={setActiveClient}
           onRefresh={() => loadUsage(period)}
-          onToggleTheme={toggleTheme}
+          onPickTheme={pickTheme}
           onSettings={() => setView("settings")}
           onClose={() => void invoke("hide_main_window").catch(() => undefined)}
         />
@@ -265,7 +289,7 @@ function DashboardPanel({
   onPeriod,
   onSelectClient,
   onRefresh,
-  onToggleTheme,
+  onPickTheme,
   onSettings,
   onClose
 }: {
@@ -278,13 +302,33 @@ function DashboardPanel({
   onPeriod: (period: Period) => void;
   onSelectClient: (client: ClientId) => void;
   onRefresh: () => void;
-  onToggleTheme: () => void;
+  onPickTheme: (theme: ThemeName) => void;
   onSettings: () => void;
   onClose: () => void;
 }) {
   const loading = loadState === "loading";
   const clients = usage?.clients ?? [];
   const activeUsage = clients.find((c) => c.client === activeClient) ?? null;
+  const [skinMenuOpen, setSkinMenuOpen] = React.useState(false);
+
+  // 点面板别处 / 按 Esc 收起皮肤菜单；只监听点击，不吞掉事件，避免影响拖拽与其它按钮
+  React.useEffect(() => {
+    if (!skinMenuOpen) return;
+    const onDocClick = (event: MouseEvent) => {
+      const target = event.target as HTMLElement | null;
+      if (target?.closest(".skin-menu-wrap")) return;
+      setSkinMenuOpen(false);
+    };
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setSkinMenuOpen(false);
+    };
+    document.addEventListener("mousedown", onDocClick);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onDocClick);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [skinMenuOpen]);
 
   return (
     <section className="panel dashboard-panel" data-testid="dashboard-panel">
@@ -316,12 +360,34 @@ function DashboardPanel({
           <div className="skin-menu-wrap">
             <button
               aria-label="切换皮肤"
+              aria-haspopup="menu"
+              aria-expanded={skinMenuOpen}
               className="skin-toggle"
-              title={theme === "dark" ? "切换到浅色" : "切换到深色"}
-              onClick={onToggleTheme}
+              title="切换皮肤"
+              onClick={() => setSkinMenuOpen((open) => !open)}
             >
               <Shirt size={18} />
             </button>
+            {skinMenuOpen && (
+              <div className="skin-menu" role="menu" data-testid="skin-menu">
+                {SKINS.map((skin) => (
+                  <button
+                    key={skin.id}
+                    role="menuitemradio"
+                    aria-checked={skin.id === theme}
+                    className={`skin-item ${skin.id === theme ? "selected" : ""}`}
+                    onClick={() => {
+                      setSkinMenuOpen(false);
+                      onPickTheme(skin.id);
+                    }}
+                  >
+                    <SkinSwatch skin={skin} />
+                    <span className="skin-item-name">{skin.name}</span>
+                    {skin.id === theme && <Check size={13} className="skin-item-check" />}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
           <button aria-label="设置" onClick={onSettings} title="设置">
             <SettingsIcon size={18} />

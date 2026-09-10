@@ -1,20 +1,6 @@
 :root {
   font-family: "Microsoft YaHei UI", "Segoe UI", system-ui, sans-serif;
   color: var(--text-strong);
-  --fg: 246, 239, 222;
-  --text-strong: rgba(255, 255, 255, 0.92);
-  --brand: #4d6bfe;
-  --brand-light: #6b85ff;
-  --flash: #4091ff;
-  --pro: #da38f0;
-  --orange: #ff9c2b;
-  --skin-accent: #e0a838;
-  --panel-bg: rgba(105, 86, 38, 0.82);
-  --panel-bg-deep: rgba(49, 58, 18, 0.72);
-  --card-bg: rgba(38, 35, 18, 0.58);
-  --card-bg-light: rgba(110, 91, 42, 0.52);
-  --text-muted: rgba(var(--fg), 0.62);
-  --text-faint: rgba(var(--fg), 0.42);
 }
 
 * {
@@ -50,18 +36,18 @@ button {
 .panel,
 .settings-panel {
   position: relative;
-  border: 1px solid rgba(255, 255, 255, 0.24);
+  border: 1px solid var(--panel-border);
   background:
-    linear-gradient(145deg, rgba(147, 120, 55, 0.72), rgba(61, 76, 33, 0.68)),
-    rgba(97, 78, 36, 0.76);
-  box-shadow: inset 0 1px rgba(255, 255, 255, 0.12);
-  backdrop-filter: blur(26px) saturate(1.12);
+    linear-gradient(var(--panel-angle), var(--panel-grad-a), var(--panel-grad-b)),
+    var(--panel-tint);
+  box-shadow: var(--panel-shadow);
+  backdrop-filter: blur(var(--blur)) saturate(var(--blur-sat));
 }
 
 .panel {
   width: min(356px, 100vw);
   height: min(600px, 100vh);
-  border-radius: 22px;
+  border-radius: var(--radius-panel);
   padding: 0 16px 16px;
   overflow: hidden;
 }
@@ -134,15 +120,15 @@ button {
   padding: 0;
   border: 0;
   background: transparent;
-  color: rgba(255, 255, 255, 0.9);
+  color: var(--icon);
   cursor: pointer;
 }
 
 .card {
-  background: linear-gradient(180deg, rgba(44, 38, 16, 0.68), rgba(36, 35, 16, 0.62));
-  border: 1px solid rgba(255, 255, 255, 0.025);
-  border-radius: 12px;
-  box-shadow: inset 0 1px rgba(255, 255, 255, 0.025);
+  background: linear-gradient(180deg, var(--card-grad-a), var(--card-grad-b));
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-card);
+  box-shadow: var(--card-shadow);
 }
 
 .balance-card {
@@ -166,7 +152,7 @@ button {
 }
 
 .caption-with-icon.orange {
-  color: rgba(255, 172, 59, 0.95);
+  color: var(--orange-text);
 }
 
 .brand-blue {
@@ -179,8 +165,8 @@ button {
   gap: 5px;
   border-radius: 999px;
   padding: 5px 9px;
-  background: rgba(65, 118, 38, 0.42);
-  color: #4df070;
+  background: var(--ok-soft);
+  color: var(--ok);
   font-size: 12px;
   font-weight: 800;
 }
@@ -189,7 +175,7 @@ button {
   width: 6px;
   height: 6px;
   border-radius: 999px;
-  background: #4df070;
+  background: var(--ok);
 }
 
 .balance-amount {
@@ -197,7 +183,7 @@ button {
   font-size: 32px;
   line-height: 1;
   font-weight: 900;
-  color: #6570ff;
+  color: var(--brand-amount);
   font-variant-numeric: tabular-nums;
 }
 
@@ -208,19 +194,19 @@ button {
 
 .balance-error {
   margin-top: 7px;
-  color: #ff8a8a;
+  color: var(--danger);
   font-size: 11px;
   font-weight: 700;
   line-height: 1.4;
 }
 
 .status-pill.off {
-  background: rgba(150, 70, 40, 0.42);
-  color: #ff9c6b;
+  background: var(--warn-soft);
+  color: var(--warn);
 }
 
 .status-pill.off span {
-  background: #ff9c6b;
+  background: var(--warn);
 }
 
 .metric-grid {
@@ -234,7 +220,7 @@ button {
   min-height: 56px;
   padding: 9px 12px;
   border-radius: 10px;
-  background: rgba(122, 101, 50, 0.46);
+  background: var(--mini-card-bg);
   min-width: 0;
   overflow: hidden;
   display: flex;
@@ -280,11 +266,11 @@ button {
 }
 
 .cache-hit-rate.flash {
-  color: #65d0d1;
+  color: var(--hit-flash);
 }
 
 .cache-hit-rate.pro {
-  color: #c98bff;
+  color: var(--hit-pro);
 }
 
 .model-badge {
@@ -302,12 +288,12 @@ button {
 }
 
 .model-badge.flash {
-  background: rgba(66, 145, 255, 0.15);
+  background: var(--badge-flash-bg);
   color: var(--flash);
 }
 
 .model-badge.pro {
-  background: rgba(218, 56, 240, 0.16);
+  background: var(--badge-pro-bg);
   color: var(--pro);
 }
 
@@ -346,7 +332,7 @@ button {
   flex: 1;
   overflow: hidden;
   border-radius: 999px;
-  background: rgba(0, 0, 0, 0.16);
+  background: var(--track);
 }
 
 .progress-track i {
@@ -356,11 +342,11 @@ button {
 }
 
 .flash-fill {
-  background: linear-gradient(90deg, #4690ff, #65d0d1);
+  background: linear-gradient(90deg, var(--flash), var(--hit-flash));
 }
 
 .pro-fill {
-  background: linear-gradient(90deg, #d93ff2, #7463d7);
+  background: linear-gradient(90deg, var(--pro), var(--pro-2));
 }
 
 .usage-price {
@@ -401,7 +387,7 @@ button {
 .settings-panel {
   width: min(420px, 100vw);
   height: min(620px, 100vh);
-  border-radius: 22px;
+  border-radius: var(--radius-panel);
   overflow: hidden;
 }
 
@@ -443,7 +429,7 @@ button {
 }
 
 .settings-section {
-  border-top: 1px solid rgba(255, 255, 255, 0.22);
+  border-top: 1px solid var(--divider);
   padding: 14px 0;
 }
 
@@ -503,11 +489,11 @@ button {
 .key-row input {
   width: 100%;
   height: 30px;
-  border: 1px solid rgba(255, 255, 255, 0.10);
+  border: 1px solid var(--key-border);
   border-radius: 7px;
   padding: 0 10px;
-  background: rgba(24, 23, 19, 0.78);
-  color: white;
+  background: var(--key-bg);
+  color: var(--key-text);
   font-size: 12px;
   letter-spacing: 2px;
 }
@@ -577,7 +563,7 @@ button:disabled {
   align-items: center;
   gap: 5px;
   flex: 0 0 auto;
-  color: #58ee72;
+  color: var(--ok);
   font-size: 11px;
   font-weight: 800;
   white-space: nowrap;
@@ -612,7 +598,7 @@ button:disabled {
   width: 44px;
   height: 22px;
   border-radius: 999px;
-  background: rgba(120, 116, 96, 0.55);
+  background: var(--toggle-off);
   transition: background 0.18s ease;
 }
 
@@ -624,12 +610,12 @@ button:disabled {
   width: 16px;
   height: 16px;
   border-radius: 999px;
-  background: #dce6ff;
+  background: var(--toggle-knob);
   transition: left 0.18s ease;
 }
 
 .toggle-row input:checked + i {
-  background: #4d7cff;
+  background: var(--toggle-on);
 }
 
 .toggle-row input:checked + i::after {
@@ -649,7 +635,7 @@ button:disabled {
   min-width: 0;
   padding: 8px 6px;
   background: rgba(var(--fg), 0.18);
-  color: white;
+  color: var(--seg-text);
   font-size: 13px;
   font-weight: 900;
   cursor: pointer;
@@ -692,7 +678,7 @@ button:disabled {
   align-items: center;
   gap: 14px;
   padding: 14px 18px;
-  border-radius: 18px;
+  border-radius: var(--radius-lg);
 }
 
 .detail-hero h1 {
@@ -716,7 +702,7 @@ button:disabled {
 
 .metric-card {
   min-height: 78px;
-  border-radius: 18px;
+  border-radius: var(--radius-lg);
   padding: 14px 16px;
 }
 
@@ -751,9 +737,9 @@ button:disabled {
   min-height: 0;
   display: flex;
   flex-direction: column;
-  border-radius: 18px;
+  border-radius: var(--radius-lg);
   padding: 14px 18px 16px;
-  background: linear-gradient(180deg, rgba(26, 50, 21, 0.58), rgba(34, 41, 17, 0.62));
+  background: linear-gradient(180deg, var(--chart-grad-a), var(--chart-grad-b));
 }
 
 .detail-chart-head {
@@ -835,7 +821,7 @@ button:disabled {
 .bar-tooltip-total {
   margin-top: 3px;
   padding-top: 5px;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  border-top: 1px solid var(--bar-divider);
   font-size: 12px;
 }
 
@@ -850,115 +836,6 @@ button:disabled {
   font-weight: 900;
 }
 
-/* ==================== Light glass skin ==================== */
-[data-theme="light"] {
-  --fg: 25, 48, 68;
-  --text-strong: rgba(22, 42, 64, 0.92);
-  --brand: #2d6cf6;
-  --brand-light: #4d84ff;
-  --flash: #2d7ff5;
-  --pro: #c02fde;
-  --orange: #ef8400;
-  --skin-accent: #2d6cf6;
-}
-
-[data-theme="light"] .panel,
-[data-theme="light"] .settings-panel {
-  border-color: rgba(255, 255, 255, 0.55);
-  background:
-    linear-gradient(150deg, rgba(150, 205, 236, 0.85), rgba(172, 224, 206, 0.82)),
-    rgba(216, 233, 239, 0.92);
-  box-shadow: inset 0 1px rgba(255, 255, 255, 0.6);
-}
-
-[data-theme="light"] .card {
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.55), rgba(255, 255, 255, 0.42));
-  border-color: rgba(255, 255, 255, 0.6);
-  box-shadow: inset 0 1px rgba(255, 255, 255, 0.7), 0 2px 8px rgba(40, 80, 120, 0.08);
-}
-
-[data-theme="light"] .header-actions button,
-[data-theme="light"] .floating-close {
-  color: rgba(22, 42, 64, 0.82);
-}
-
-[data-theme="light"] .caption-with-icon.orange {
-  color: rgba(216, 118, 8, 1);
-}
-
-[data-theme="light"] .status-pill {
-  background: rgba(34, 160, 90, 0.16);
-  color: #15a34a;
-}
-[data-theme="light"] .status-pill span {
-  background: #15a34a;
-}
-[data-theme="light"] .status-pill.off {
-  background: rgba(224, 108, 52, 0.18);
-  color: #d2691e;
-}
-[data-theme="light"] .status-pill.off span {
-  background: #d2691e;
-}
-
-[data-theme="light"] .balance-amount {
-  color: #2d6cf6;
-}
-[data-theme="light"] .balance-error {
-  color: #dc2626;
-}
-[data-theme="light"] .mini-card {
-  background: rgba(255, 255, 255, 0.52);
-}
-
-[data-theme="light"] .cache-hit-rate.flash {
-  color: #0e9aa0;
-}
-[data-theme="light"] .cache-hit-rate.pro {
-  color: #9333ea;
-}
-
-[data-theme="light"] .model-badge.flash {
-  background: rgba(45, 127, 245, 0.18);
-}
-[data-theme="light"] .model-badge.pro {
-  background: rgba(192, 47, 222, 0.18);
-}
-
-[data-theme="light"] .progress-track {
-  background: rgba(40, 70, 100, 0.12);
-}
-
-[data-theme="light"] .detail-chart {
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.45), rgba(255, 255, 255, 0.34));
-}
-[data-theme="light"] .bar-tooltip-total {
-  border-top-color: rgba(40, 70, 100, 0.14);
-}
-
-[data-theme="light"] .settings-section {
-  border-top-color: rgba(40, 70, 100, 0.14);
-}
-[data-theme="light"] .key-row input {
-  border-color: rgba(40, 70, 100, 0.18);
-  background: rgba(255, 255, 255, 0.72);
-  color: #1a2a40;
-}
-[data-theme="light"] .configured {
-  color: #16a34a;
-}
-[data-theme="light"] .toggle-row i {
-  background: rgba(40, 70, 100, 0.22);
-}
-[data-theme="light"] .toggle-row input:checked + i {
-  background: #2d6cf6;
-}
-[data-theme="light"] .segmented button {
-  color: #1a2a40;
-}
-[data-theme="light"] .segmented .selected {
-  color: #fff;
-}
 
 /* 皮肤选择按钮与弹窗 */
 .skin-menu-wrap {
@@ -978,4 +855,94 @@ button:disabled {
   background: rgba(var(--fg), 0.14);
   color: var(--skin-accent);
   box-shadow: inset 0 0 0 1px rgba(var(--fg), 0.12);
+}
+
+/* 点击展开的皮肤小菜单：贴着衬衣按钮向下弹出，宽度按内容，不改变 header 布局 */
+.skin-menu {
+  position: absolute;
+  top: 30px;
+  right: 0;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 132px;
+  padding: 5px;
+  border: 1px solid var(--menu-border);
+  border-radius: var(--radius-card);
+  background: var(--menu-bg);
+  box-shadow: var(--menu-shadow);
+  backdrop-filter: blur(var(--blur)) saturate(var(--blur-sat));
+  -webkit-app-region: no-drag;
+}
+
+/* 注意：这里的每条选择器都必须带上 .skin-menu 作用域。
+   header 里有一条 `.header-actions button { display:grid; width:24px; height:24px; padding:0 }`
+   特异性是 (0,1,1)，比裸 `.skin-item`(0,1,0) 高 —— 不作用域的话条目会被压成 24x24 的图标按钮，
+   中文名被挤出条目框、五行叠在一起，看着像只有一项。 */
+.skin-menu .skin-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  height: auto;
+  padding: 6px 7px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-strong);
+  font-size: 12px;
+  font-weight: 800;
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.skin-menu .skin-item:hover {
+  background: var(--bg-hover);
+}
+
+.skin-menu .skin-item.selected {
+  background: rgba(var(--fg), 0.12);
+}
+
+.skin-menu .skin-item-name {
+  flex: 1;
+  white-space: nowrap;
+}
+
+.skin-menu .skin-item-check {
+  flex: 0 0 auto;
+  color: var(--skin-accent);
+}
+
+/* 色卡：面板底 + 卡片块 + 强调色点，一眼看出这套皮肤长什么样 */
+.skin-swatch {
+  position: relative;
+  flex: 0 0 auto;
+  width: 22px;
+  height: 16px;
+  border-radius: 5px;
+  overflow: hidden;
+  box-shadow: inset 0 0 0 1px rgba(var(--fg), 0.16);
+}
+
+.skin-swatch-card {
+  position: absolute;
+  left: 3px;
+  top: 3px;
+  width: 11px;
+  height: 10px;
+  border-radius: 3px;
+  border: 1px solid transparent;
+  opacity: 0.9;
+}
+
+.skin-swatch-accent {
+  position: absolute;
+  right: 2px;
+  bottom: 2px;
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
 }

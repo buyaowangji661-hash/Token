@@ -1,6 +1,7 @@
 import { app } from "electron";
 import fs from "node:fs";
 import path from "node:path";
+import { DEFAULT_THEME, isThemeName } from "../shared/types";
 import type { ThemeName } from "../shared/types";
 
 export type StoredConfig = {
@@ -17,8 +18,8 @@ const DEFAULTS: StoredConfig = {
   refreshIntervalSeconds: 60,
   autoRefreshEnabled: true,
   autostart: false,
-  // 默认浅色皮肤；用户点过皮肤开关后以 config.json 存的为准
-  theme: "light"
+  // 默认浅色皮肤；用户选过皮肤后以 config.json 存的为准
+  theme: DEFAULT_THEME
 };
 
 /** 0.1.2 及更早的默认刷新间隔；只在一次性迁移里用来识别「没动过这个设置」的老配置 */
@@ -51,8 +52,8 @@ export function readConfig(): StoredConfig {
     autoRefreshEnabled:
       typeof parsed.autoRefreshEnabled === "boolean" ? parsed.autoRefreshEnabled : DEFAULTS.autoRefreshEnabled,
     autostart: typeof parsed.autostart === "boolean" ? parsed.autostart : DEFAULTS.autostart,
-    // 缺失或非法时回落到默认的浅色
-    theme: parsed.theme === "dark" ? "dark" : "light",
+    // 缺失、非法或旧版本写坏的值一律回落到默认皮肤
+    theme: isThemeName(parsed.theme) ? parsed.theme : DEFAULTS.theme,
     refreshMigrated: parsed.refreshMigrated === true
   };
 

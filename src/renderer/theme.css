@@ -1,0 +1,533 @@
+/* =============================================================================
+   皮肤（theme）变量层
+   -----------------------------------------------------------------------------
+   这里只放变量赋值，不放结构/布局。所有面板、卡片、控件的外观都从这些变量取，
+   加一套新皮肤 = 加一个 [data-theme="<id>"] 块。
+
+   id 说明：dark / light 是 0.1.3 及更早就在 config.json 与 localStorage 里使用的
+   旧 id，**不可改名**（改了要写迁移）；菜单里显示的是中文昵称，见 src/renderer/theme.ts。
+   本文件在 main.tsx 里先于 styles.css / extra.css 引入，所以 :root 的默认值只作为
+   「首帧属性还没写上」时的兜底，任何 [data-theme] 块都能盖住它。
+   ============================================================================= */
+
+/* ---------- 1. dark 「琥珀」：0.1.3 之前的深色，视觉原样保留 ---------- */
+:root,
+[data-theme="dark"] {
+  --radius-panel: 22px;
+  --radius-card: 12px;
+  --radius-lg: 18px;
+
+  --fg: 246, 239, 222;
+  --text-strong: rgba(255, 255, 255, 0.92);
+  --text-muted: rgba(var(--fg), 0.62);
+  --text-faint: rgba(var(--fg), 0.42);
+
+  --brand: #4d6bfe;
+  --brand-light: #6b85ff;
+  --brand-amount: #6570ff;
+  --flash: #4091ff;
+  --pro: #da38f0;
+  --pro-2: #7463d7;
+  --orange: #ff9c2b;
+  --orange-text: rgba(255, 172, 59, 0.95);
+  --skin-accent: #e0a838;
+  --on-accent: #fff;
+  --seg-text: #fff;
+  --tab-on: #fff;
+
+  --codex: #3b82f6;
+  --hermes: #a855f7;
+  --antigravity: #f59e0b;
+  --grok: #06b6d4;
+  --tab-glow-codex: 0 2px 10px rgba(59, 130, 246, 0.35);
+  --tab-glow-hermes: 0 2px 10px rgba(168, 85, 247, 0.35);
+  --tab-glow-antigravity: 0 2px 10px rgba(245, 158, 11, 0.35);
+  --tab-glow-grok: 0 2px 10px rgba(6, 182, 212, 0.35);
+
+  --panel-angle: 145deg;
+  --panel-grad-a: rgba(147, 120, 55, 0.72);
+  --panel-grad-b: rgba(61, 76, 33, 0.68);
+  --panel-tint: rgba(97, 78, 36, 0.76);
+  --panel-border: rgba(255, 255, 255, 0.24);
+  --panel-shadow: inset 0 1px rgba(255, 255, 255, 0.12);
+  --blur: 26px;
+  --blur-sat: 1.12;
+
+  --card-grad-a: rgba(44, 38, 16, 0.68);
+  --card-grad-b: rgba(36, 35, 16, 0.62);
+  --card-border: rgba(255, 255, 255, 0.025);
+  --card-shadow: inset 0 1px rgba(255, 255, 255, 0.025);
+
+  --mini-card-bg: rgba(122, 101, 50, 0.46);
+  --chart-grad-a: rgba(26, 50, 21, 0.58);
+  --chart-grad-b: rgba(34, 41, 17, 0.62);
+  --track: rgba(0, 0, 0, 0.16);
+  --track-soft: rgba(255, 255, 255, 0.06);
+  --divider: rgba(255, 255, 255, 0.22);
+  --bar-divider: rgba(255, 255, 255, 0.1);
+  --gauge-track: rgba(255, 255, 255, 0.12);
+
+  --chip-bg: rgba(255, 255, 255, 0.04);
+  --chip-bg-soft: rgba(255, 255, 255, 0.04);
+  --bg-count: rgba(255, 255, 255, 0.08);
+  --bg-hover: rgba(255, 255, 255, 0.08);
+  --bg-grid: rgba(0, 0, 0, 0.22);
+  --bg-list: rgba(0, 0, 0, 0.22);
+  --bg-code: rgba(0, 0, 0, 0.28);
+  --bg-raised: rgba(255, 255, 255, 0.05);
+  --bg-back: rgba(255, 255, 255, 0.06);
+  --bg-pill: rgba(255, 255, 255, 0.06);
+  --inset-border: rgba(255, 255, 255, 0.04);
+  --chip-border-soft: rgba(255, 255, 255, 0.06);
+
+  --key-bg: rgba(24, 23, 19, 0.78);
+  --key-border: rgba(255, 255, 255, 0.1);
+  --key-text: #fff;
+
+  --icon: rgba(255, 255, 255, 0.9);
+  --toggle-off: rgba(120, 116, 96, 0.55);
+  --toggle-on: #4d7cff;
+  --toggle-knob: #dce6ff;
+
+  --ok: #4df070;
+  --ok-soft: rgba(65, 118, 38, 0.42);
+  --warn: #ff9c6b;
+  --warn-soft: rgba(150, 70, 40, 0.42);
+  --danger: #ff8a8a;
+  --danger-bg: rgba(255, 80, 80, 0.12);
+  --danger-border: rgba(255, 80, 80, 0.25);
+
+  --icon-gold: #ffb84d;
+  --icon-down: #4091ff;
+  --icon-up: #ff5c77;
+  --icon-zap: #38bdf8;
+  --icon-brain: #c084fc;
+  --icon-layers: #fb923c;
+  --icon-success: #34d399;
+  --hit-tag-bg: rgba(52, 211, 153, 0.15);
+  --hit-tag-text: #34d399;
+  --hit-flash: #65d0d1;
+  --hit-pro: #c98bff;
+  --badge-flash-bg: rgba(66, 145, 255, 0.15);
+  --badge-pro-bg: rgba(218, 56, 240, 0.16);
+
+  --menu-bg: rgba(52, 44, 22, 0.94);
+  --menu-border: rgba(255, 255, 255, 0.18);
+  --menu-shadow: 0 14px 30px rgba(0, 0, 0, 0.45);
+}
+
+/* ---------- 2. light 「青蓝」：0.1.3 的浅色 ----------
+   与旧版有 5 处差别：四个客户端色按浅底重标定（#3b82f6→#2563eb 等），
+   外加 .model-tokens-badge —— 旧版浅色块漏了给它覆盖，浅底上一直用深色专用的
+   rgba(255,255,255,0.08)，几乎看不见；这里随 --bg-count 改成 rgba(0,0,0,0.06)。
+   其余每个值都与旧版逐字段一致。 */
+[data-theme="light"] {
+  --fg: 25, 48, 68;
+  --text-strong: rgba(22, 42, 64, 0.92);
+  --text-muted: rgba(var(--fg), 0.62);
+  --text-faint: rgba(var(--fg), 0.42);
+
+  --brand: #2d6cf6;
+  --brand-light: #4d84ff;
+  --brand-amount: #2d6cf6;
+  --flash: #2d7ff5;
+  --pro: #c02fde;
+  --pro-2: #7463d7;
+  --orange: #ef8400;
+  --orange-text: rgba(216, 118, 8, 1);
+  --skin-accent: #2d6cf6;
+  --on-accent: #fff;
+  --seg-text: #1a2a40;
+  --tab-on: #fff;
+
+  --codex: #2563eb;
+  --hermes: #9333ea;
+  --antigravity: #d97706;
+  --grok: #0891b2;
+  --tab-glow-codex: 0 2px 10px rgba(59, 130, 246, 0.35);
+  --tab-glow-hermes: 0 2px 10px rgba(168, 85, 247, 0.35);
+  --tab-glow-antigravity: 0 2px 10px rgba(245, 158, 11, 0.35);
+  --tab-glow-grok: 0 2px 10px rgba(6, 182, 212, 0.35);
+
+  --panel-angle: 150deg;
+  --panel-grad-a: rgba(150, 205, 236, 0.85);
+  --panel-grad-b: rgba(172, 224, 206, 0.82);
+  --panel-tint: rgba(216, 233, 239, 0.92);
+  --panel-border: rgba(255, 255, 255, 0.55);
+  --panel-shadow: inset 0 1px rgba(255, 255, 255, 0.6);
+  --blur: 26px;
+  --blur-sat: 1.12;
+
+  --card-grad-a: rgba(255, 255, 255, 0.55);
+  --card-grad-b: rgba(255, 255, 255, 0.42);
+  --card-border: rgba(255, 255, 255, 0.6);
+  --card-shadow: inset 0 1px rgba(255, 255, 255, 0.7), 0 2px 8px rgba(40, 80, 120, 0.08);
+
+  --mini-card-bg: rgba(255, 255, 255, 0.52);
+  --chart-grad-a: rgba(255, 255, 255, 0.45);
+  --chart-grad-b: rgba(255, 255, 255, 0.34);
+  --track: rgba(40, 70, 100, 0.12);
+  --track-soft: rgba(0, 0, 0, 0.08);
+  --divider: rgba(40, 70, 100, 0.14);
+  --bar-divider: rgba(40, 70, 100, 0.14);
+  /* 环形仪表轨道：旧版写死在 main.tsx 里的 rgba(255,255,255,0.12) 是给深色用的，
+     浅底上那条轨道等于看不见；这里与 --track 同值。 */
+  --gauge-track: rgba(40, 70, 100, 0.12);
+
+  --chip-bg: rgba(255, 255, 255, 0.04);
+  --chip-bg-soft: rgba(0, 0, 0, 0.03);
+  --bg-count: rgba(0, 0, 0, 0.06);
+  --bg-hover: rgba(0, 0, 0, 0.06);
+  --bg-grid: rgba(0, 0, 0, 0.04);
+  --bg-list: rgba(0, 0, 0, 0.03);
+  --bg-code: rgba(0, 0, 0, 0.28);
+  --bg-raised: rgba(255, 255, 255, 0.05);
+  --bg-back: rgba(255, 255, 255, 0.06);
+  --bg-pill: rgba(0, 0, 0, 0.05);
+  --inset-border: rgba(0, 0, 0, 0.06);
+  --chip-border-soft: rgba(0, 0, 0, 0.06);
+
+  --key-bg: rgba(255, 255, 255, 0.72);
+  --key-border: rgba(40, 70, 100, 0.18);
+  --key-text: #1a2a40;
+
+  --icon: rgba(22, 42, 64, 0.82);
+  --toggle-off: rgba(40, 70, 100, 0.22);
+  --toggle-on: #2d6cf6;
+  --toggle-knob: #dce6ff;
+
+  --ok: #15a34a;
+  --ok-soft: rgba(34, 160, 90, 0.16);
+  --warn: #d2691e;
+  --warn-soft: rgba(224, 108, 52, 0.18);
+  --danger: #dc2626;
+  --danger-bg: rgba(255, 80, 80, 0.12);
+  --danger-border: rgba(255, 80, 80, 0.25);
+
+  --icon-gold: #ffb84d;
+  --icon-down: #4091ff;
+  --icon-up: #ff5c77;
+  --icon-zap: #38bdf8;
+  --icon-brain: #c084fc;
+  --icon-layers: #fb923c;
+  --icon-success: #34d399;
+  --hit-tag-bg: rgba(52, 211, 153, 0.15);
+  --hit-tag-text: #34d399;
+  --hit-flash: #0e9aa0;
+  --hit-pro: #9333ea;
+  --badge-flash-bg: rgba(45, 127, 245, 0.18);
+  --badge-pro-bg: rgba(192, 47, 222, 0.18);
+
+  --menu-bg: rgba(255, 255, 255, 0.94);
+  --menu-border: rgba(40, 70, 100, 0.16);
+  --menu-shadow: 0 14px 30px rgba(40, 80, 120, 0.22);
+}
+
+/* ---------- 3. neon 「午夜」 ---------- */
+[data-theme="neon"] {
+  --fg: 214, 232, 246;
+  --text-strong: rgba(233, 244, 255, 0.94);
+  --text-muted: rgba(var(--fg), 0.6);
+  --text-faint: rgba(var(--fg), 0.4);
+
+  --brand: #22d3ee;
+  --brand-light: #67e8f9;
+  --brand-amount: #22d3ee;
+  --flash: #38bdf8;
+  --pro: #d946ef;
+  --pro-2: #7c3aed;
+  --orange: #fbbf24;
+  --orange-text: #fbbf24;
+  --skin-accent: #22d3ee;
+  --on-accent: #04212b;
+  --tab-on: #e9f4ff;
+  --seg-text: #e9f4ff;
+
+  --codex: #3b82f6;
+  --hermes: #d946ef;
+  --antigravity: #f59e0b;
+  --grok: #22d3ee;
+  --tab-glow-codex: 0 2px 12px rgba(59, 130, 246, 0.5);
+  --tab-glow-hermes: 0 2px 12px rgba(217, 70, 239, 0.5);
+  --tab-glow-antigravity: 0 2px 12px rgba(245, 158, 11, 0.5);
+  --tab-glow-grok: 0 2px 12px rgba(34, 211, 238, 0.5);
+
+  --panel-angle: 155deg;
+  --panel-grad-a: rgba(13, 17, 26, 0.94);
+  --panel-grad-b: rgba(20, 28, 48, 0.9);
+  --panel-tint: rgba(9, 12, 20, 0.94);
+  --panel-border: rgba(34, 211, 238, 0.34);
+  --panel-shadow: inset 0 1px rgba(255, 255, 255, 0.08), 0 0 0 1px rgba(34, 211, 238, 0.08),
+    0 16px 40px rgba(0, 0, 0, 0.55);
+  --blur: 20px;
+  --blur-sat: 1.05;
+
+  --card-grad-a: rgba(22, 30, 48, 0.82);
+  --card-grad-b: rgba(16, 22, 36, 0.78);
+  --card-border: rgba(34, 211, 238, 0.18);
+  --card-shadow: inset 0 1px rgba(255, 255, 255, 0.05);
+
+  --mini-card-bg: rgba(24, 34, 52, 0.7);
+  --chart-grad-a: rgba(14, 20, 34, 0.8);
+  --chart-grad-b: rgba(10, 15, 26, 0.8);
+  --track: rgba(255, 255, 255, 0.12);
+  --track-soft: rgba(34, 211, 238, 0.16);
+  --divider: rgba(34, 211, 238, 0.2);
+  --bar-divider: rgba(34, 211, 238, 0.2);
+  --gauge-track: rgba(34, 211, 238, 0.2);
+
+  --chip-bg: rgba(34, 211, 238, 0.08);
+  --chip-bg-soft: rgba(34, 211, 238, 0.06);
+  --bg-count: rgba(34, 211, 238, 0.14);
+  --bg-hover: rgba(34, 211, 238, 0.14);
+  --bg-grid: rgba(6, 10, 18, 0.6);
+  --bg-list: rgba(6, 10, 18, 0.6);
+  --bg-code: rgba(6, 10, 18, 0.72);
+  --bg-raised: rgba(34, 211, 238, 0.08);
+  --bg-back: rgba(34, 211, 238, 0.08);
+  --bg-pill: rgba(34, 211, 238, 0.1);
+  --inset-border: rgba(34, 211, 238, 0.14);
+  --chip-border-soft: rgba(34, 211, 238, 0.2);
+
+  --key-bg: rgba(6, 10, 18, 0.72);
+  --key-border: rgba(34, 211, 238, 0.18);
+  --key-text: #e9f4ff;
+
+  --icon: rgba(190, 225, 255, 0.86);
+  --toggle-off: rgba(120, 150, 170, 0.35);
+  --toggle-on: #22d3ee;
+  --toggle-knob: #e9f4ff;
+
+  --ok: #22d3ee;
+  --ok-soft: rgba(34, 211, 238, 0.16);
+  --warn: #fbbf24;
+  --warn-soft: rgba(251, 191, 36, 0.16);
+  --danger: #fb7185;
+  --danger-bg: rgba(251, 113, 133, 0.14);
+  --danger-border: rgba(251, 113, 133, 0.28);
+
+  --icon-gold: #fbbf24;
+  --icon-down: #38bdf8;
+  --icon-up: #fb7185;
+  --icon-zap: #22d3ee;
+  --icon-brain: #c084fc;
+  --icon-layers: #fb923c;
+  --icon-success: #34d399;
+  --hit-tag-bg: rgba(52, 211, 153, 0.16);
+  --hit-tag-text: #34d399;
+  --hit-flash: #22d3ee;
+  --hit-pro: #e879f9;
+  --badge-flash-bg: rgba(56, 189, 248, 0.18);
+  --badge-pro-bg: rgba(217, 70, 239, 0.2);
+
+  --menu-bg: rgba(12, 18, 30, 0.95);
+  --menu-border: rgba(34, 211, 238, 0.26);
+  --menu-shadow: 0 16px 34px rgba(0, 0, 0, 0.6);
+}
+
+/* ---------- 4. paper 「素白」：无渐变、几乎不模糊、小圆角、主色为墨黑 ---------- */
+[data-theme="paper"] {
+  --radius-panel: 14px;
+  --radius-card: 9px;
+  --radius-lg: 12px;
+
+  --fg: 34, 34, 30;
+  --text-strong: #1b1b18;
+  --text-muted: rgba(var(--fg), 0.58);
+  --text-faint: rgba(var(--fg), 0.4);
+
+  --brand: #1b1b18;
+  --brand-light: #44443e;
+  --brand-amount: #1b1b18;
+  --flash: #2563eb;
+  --pro: #7c3aed;
+  --pro-2: #6d28d9;
+  --orange: #b45309;
+  --orange-text: #b45309;
+  --skin-accent: #1b1b18;
+  --on-accent: #fbfbf9;
+  --tab-on: #fff;
+  --seg-text: #1b1b18;
+
+  --codex: #2563eb;
+  --hermes: #7c3aed;
+  --antigravity: #b45309;
+  --grok: #0e7490;
+  --tab-glow-codex: none;
+  --tab-glow-hermes: none;
+  --tab-glow-antigravity: none;
+  --tab-glow-grok: none;
+
+  --panel-angle: 160deg;
+  --panel-grad-a: #fbfbf9;
+  --panel-grad-b: #f3f3ef;
+  --panel-tint: #f8f8f5;
+  --panel-border: rgba(0, 0, 0, 0.1);
+  --panel-shadow: 0 10px 26px rgba(28, 28, 24, 0.14);
+  --blur: 4px;
+  --blur-sat: 1;
+
+  --card-grad-a: #ffffff;
+  --card-grad-b: #fcfcfa;
+  --card-border: rgba(0, 0, 0, 0.08);
+  --card-shadow: none;
+
+  --mini-card-bg: #f4f4f1;
+  --chart-grad-a: #ffffff;
+  --chart-grad-b: #fafaf7;
+  --track: rgba(0, 0, 0, 0.1);
+  --track-soft: rgba(0, 0, 0, 0.08);
+  --divider: rgba(0, 0, 0, 0.1);
+  --bar-divider: rgba(0, 0, 0, 0.1);
+  --gauge-track: rgba(0, 0, 0, 0.1);
+
+  --chip-bg: #f0f0ec;
+  --chip-bg-soft: #f4f4f1;
+  --bg-count: #ececE7;
+  --bg-hover: #eaeae5;
+  --bg-grid: #f4f4f1;
+  --bg-list: #f7f7f4;
+  --bg-code: #f2f2ee;
+  --bg-raised: #f0f0ec;
+  --bg-back: #f0f0ec;
+  --bg-pill: #efefea;
+  --inset-border: rgba(0, 0, 0, 0.06);
+  --chip-border-soft: rgba(0, 0, 0, 0.08);
+
+  --key-bg: #ffffff;
+  --key-border: rgba(0, 0, 0, 0.12);
+  --key-text: #1b1b18;
+
+  --icon: rgba(34, 34, 30, 0.62);
+  --toggle-off: rgba(0, 0, 0, 0.18);
+  --toggle-on: #1b1b18;
+  --toggle-knob: #ffffff;
+
+  --ok: #15803d;
+  --ok-soft: rgba(21, 128, 61, 0.12);
+  --warn: #b45309;
+  --warn-soft: rgba(180, 83, 9, 0.12);
+  --danger: #b91c1c;
+  --danger-bg: rgba(185, 28, 28, 0.08);
+  --danger-border: rgba(185, 28, 28, 0.2);
+
+  --icon-gold: #a16207;
+  --icon-down: #2563eb;
+  --icon-up: #be123c;
+  --icon-zap: #0369a1;
+  --icon-brain: #6d28d9;
+  --icon-layers: #c2410c;
+  --icon-success: #15803d;
+  --hit-tag-bg: rgba(21, 128, 61, 0.12);
+  --hit-tag-text: #15803d;
+  --hit-flash: #0e7490;
+  --hit-pro: #7c3aed;
+  --badge-flash-bg: rgba(37, 99, 235, 0.12);
+  --badge-pro-bg: rgba(124, 58, 237, 0.12);
+
+  --menu-bg: #ffffff;
+  --menu-border: rgba(0, 0, 0, 0.12);
+  --menu-shadow: 0 14px 30px rgba(28, 28, 24, 0.18);
+}
+
+/* ---------- 5. cyber 「赛博紫」 ---------- */
+[data-theme="cyber"] {
+  --fg: 238, 226, 255;
+  --text-strong: rgba(245, 240, 255, 0.94);
+  --text-muted: rgba(var(--fg), 0.62);
+  --text-faint: rgba(var(--fg), 0.42);
+
+  --brand: #a855f7;
+  --brand-light: #c084fc;
+  --brand-amount: #c084fc;
+  --flash: #38bdf8;
+  --pro: #e879f9;
+  --pro-2: #a855f7;
+  --orange: #fb923c;
+  --orange-text: #fb923c;
+  --skin-accent: #e879f9;
+  --on-accent: #1a0430;
+  --tab-on: #f2e9ff;
+  --seg-text: #f2e9ff;
+
+  --codex: #22d3ee;
+  --hermes: #e879f9;
+  --antigravity: #facc15;
+  --grok: #a78bfa;
+  --tab-glow-codex: 0 2px 12px rgba(34, 211, 238, 0.45);
+  --tab-glow-hermes: 0 2px 12px rgba(232, 121, 249, 0.45);
+  --tab-glow-antigravity: 0 2px 12px rgba(250, 204, 21, 0.45);
+  --tab-glow-grok: 0 2px 12px rgba(167, 139, 250, 0.45);
+
+  --panel-angle: 150deg;
+  --panel-grad-a: rgba(30, 12, 52, 0.93);
+  --panel-grad-b: rgba(14, 10, 34, 0.9);
+  --panel-tint: rgba(20, 8, 38, 0.94);
+  --panel-border: rgba(217, 70, 239, 0.36);
+  --panel-shadow: inset 0 1px rgba(255, 255, 255, 0.08), 0 0 0 1px rgba(217, 70, 239, 0.1),
+    0 16px 40px rgba(20, 0, 40, 0.55);
+  --blur: 22px;
+  --blur-sat: 1.1;
+
+  --card-grad-a: rgba(48, 22, 78, 0.78);
+  --card-grad-b: rgba(32, 16, 58, 0.72);
+  --card-border: rgba(217, 70, 239, 0.2);
+  --card-shadow: inset 0 1px rgba(255, 255, 255, 0.06);
+
+  --mini-card-bg: rgba(56, 28, 88, 0.6);
+  --chart-grad-a: rgba(28, 12, 48, 0.8);
+  --chart-grad-b: rgba(18, 8, 34, 0.8);
+  --track: rgba(255, 255, 255, 0.12);
+  --track-soft: rgba(217, 70, 239, 0.18);
+  --divider: rgba(217, 70, 239, 0.22);
+  --bar-divider: rgba(217, 70, 239, 0.22);
+  --gauge-track: rgba(217, 70, 239, 0.22);
+
+  --chip-bg: rgba(217, 70, 239, 0.1);
+  --chip-bg-soft: rgba(217, 70, 239, 0.08);
+  --bg-count: rgba(217, 70, 239, 0.16);
+  --bg-hover: rgba(217, 70, 239, 0.16);
+  --bg-grid: rgba(14, 6, 28, 0.6);
+  --bg-list: rgba(14, 6, 28, 0.6);
+  --bg-code: rgba(14, 6, 28, 0.7);
+  --bg-raised: rgba(217, 70, 239, 0.1);
+  --bg-back: rgba(217, 70, 239, 0.1);
+  --bg-pill: rgba(217, 70, 239, 0.12);
+  --inset-border: rgba(217, 70, 239, 0.16);
+  --chip-border-soft: rgba(217, 70, 239, 0.22);
+
+  --key-bg: rgba(14, 6, 28, 0.7);
+  --key-border: rgba(217, 70, 239, 0.2);
+  --key-text: #f2e9ff;
+
+  --icon: rgba(226, 200, 255, 0.88);
+  --toggle-off: rgba(160, 130, 190, 0.38);
+  --toggle-on: #c084fc;
+  --toggle-knob: #f2e9ff;
+
+  --ok: #34d399;
+  --ok-soft: rgba(52, 211, 153, 0.16);
+  --warn: #fb923c;
+  --warn-soft: rgba(251, 146, 60, 0.16);
+  --danger: #fb7185;
+  --danger-bg: rgba(251, 113, 133, 0.14);
+  --danger-border: rgba(251, 113, 133, 0.28);
+
+  --icon-gold: #facc15;
+  --icon-down: #38bdf8;
+  --icon-up: #fb7185;
+  --icon-zap: #22d3ee;
+  --icon-brain: #e879f9;
+  --icon-layers: #fb923c;
+  --icon-success: #34d399;
+  --hit-tag-bg: rgba(52, 211, 153, 0.16);
+  --hit-tag-text: #34d399;
+  --hit-flash: #22d3ee;
+  --hit-pro: #e879f9;
+  --badge-flash-bg: rgba(56, 189, 248, 0.18);
+  --badge-pro-bg: rgba(232, 121, 249, 0.2);
+
+  --menu-bg: rgba(26, 10, 46, 0.95);
+  --menu-border: rgba(217, 70, 239, 0.3);
+  --menu-shadow: 0 16px 34px rgba(20, 0, 40, 0.6);
+}

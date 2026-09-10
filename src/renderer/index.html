@@ -1,9 +1,27 @@
 <!doctype html>
-<html lang="zh-CN" data-theme="light">
+<html lang="zh-CN">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Token</title>
+    <!--
+      皮肤要在首帧之前定下来，否则会先按默认皮肤画一遍再跳到用户选的那套（闪一下）。
+      这里必须是内联脚本：它早于样式表与 React 执行。
+      合法 id 与 renderer/theme.ts 的 SKINS / shared/types.ts 的 THEME_IDS 保持一致。
+    -->
+    <script>
+      (function () {
+        var ids = ["light", "dark", "neon", "paper", "cyber"];
+        var saved = null;
+        try {
+          saved = localStorage.getItem("token-theme");
+        } catch (e) {
+          saved = null;
+        }
+        var theme = ids.indexOf(saved) >= 0 ? saved : "light";
+        document.documentElement.setAttribute("data-theme", theme);
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

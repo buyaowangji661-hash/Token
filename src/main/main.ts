@@ -2,6 +2,7 @@ import { app, BrowserWindow, ipcMain, Menu, nativeImage, screen, shell, Tray } f
 import fs from "node:fs";
 import path from "node:path";
 import type { AppConfig, Period, ThemeName, UsageResult } from "../shared/types";
+import { DEFAULT_THEME, isThemeName } from "../shared/types";
 import { syncAntigravity } from "./antigravity";
 import { configPath, pricingPath, pricingPathExists, readConfig, readPricingFile, writeConfig } from "./config";
 import { catalogStatus, ensureCatalogFresh, refreshCatalog } from "./priceCatalog";
@@ -352,7 +353,8 @@ function registerIpc(): void {
   });
 
   ipcMain.handle("save_theme", (_event, args: { theme: ThemeName }) => {
-    writeConfig({ theme: args.theme === "light" ? "light" : "dark" });
+    // 非法 id（旧版本/手改配置）不写入，避免把坏值落盘后渲染层读回一个空白皮肤
+    writeConfig({ theme: isThemeName(args.theme) ? args.theme : DEFAULT_THEME });
     return currentConfig();
   });
 

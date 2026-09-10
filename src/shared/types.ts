@@ -62,7 +62,22 @@ export type UsageResult = {
   scanMs: number;
 };
 
-export type ThemeName = "dark" | "light";
+/**
+ * 皮肤 id。
+ * light / dark 是 0.1.3 及更早在 config.json 与 localStorage 里用过的历史 id，
+ * **不可改名**（改名要写配置迁移）；菜单里显示的中文名见 renderer/theme.ts 的 SKINS。
+ * 顺序即菜单顺序。
+ */
+export const THEME_IDS = ["light", "dark", "neon", "paper", "cyber"] as const;
+export type ThemeName = (typeof THEME_IDS)[number];
+
+/** 新装默认皮肤（与 0.1.3 的默认一致，改这个只影响全新机器） */
+export const DEFAULT_THEME: ThemeName = "light";
+
+/** 读回来的值可能是旧版本写的、手改的、或别的类型，一律收敛到这个判断 */
+export function isThemeName(value: unknown): value is ThemeName {
+  return typeof value === "string" && (THEME_IDS as readonly string[]).includes(value);
+}
 
 /**
  * 自动更新状态机（主进程 → 渲染层推送）。

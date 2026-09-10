@@ -23,10 +23,12 @@ export function updateStatus(): UpdateStatus {
   return status;
 }
 
-/** 便携版（electron-builder portable）无法自动更新：它跑在临时解包目录里 */
+/** 便携版（历史打包形态，现已不再发布）无法自动更新：它跑在临时解包目录里 */
 function isPortable(): boolean {
   return Boolean(process.env.PORTABLE_EXECUTABLE_DIR);
 }
+
+const PORTABLE_HINT = "便携版无法自动更新，请到 GitHub Releases 下载 Token-Setup-*.exe 安装版";
 
 export function setupUpdater(send: (status: UpdateStatus) => void): void {
   emit = send;
@@ -35,7 +37,7 @@ export function setupUpdater(send: (status: UpdateStatus) => void): void {
     return;
   }
   if (isPortable()) {
-    set({ state: "portable", message: "便携版不支持自动更新，请从 GitHub Releases 下载新版" });
+    set({ state: "portable", message: PORTABLE_HINT });
     return;
   }
 
@@ -77,7 +79,7 @@ export async function checkForUpdates(): Promise<UpdateStatus> {
     return status;
   }
   if (isPortable()) {
-    set({ state: "portable", message: "便携版不支持自动更新，请从 GitHub Releases 下载新版" });
+    set({ state: "portable", message: PORTABLE_HINT });
     return status;
   }
   try {

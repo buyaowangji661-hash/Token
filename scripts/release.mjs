@@ -80,18 +80,18 @@ if (!has("--skip-build")) {
   run("npm", ["run", "dist"]);
 }
 
-// 3. 收集产物：安装包 + latest.yml（自动更新靠它发现新版），便携版一起给
+// 3. 收集产物：安装包 + latest.yml（自动更新靠它发现新版）
+//    产物名必须与 build.nsis.artifactName 一致（不能带空格，否则 GitHub 会改名、latest.yml 指向落空）
 const releaseDir = path.join(root, "release");
+const installer = path.join(releaseDir, `Token-Setup-${version}.exe`);
 const wanted = [
-  `Token Setup ${version}.exe`,
-  "latest.yml",
-  "latest-mac.yml",
-  `Token ${version}.exe`
+  `Token-Setup-${version}.exe`,
+  `Token-Setup-${version}.exe.blockmap`,
+  "latest.yml"
 ];
 const files = wanted
   .map((name) => path.join(releaseDir, name))
   .filter((file) => fs.existsSync(file));
-const installer = path.join(releaseDir, `Token Setup ${version}.exe`);
 if (!fs.existsSync(installer)) {
   console.error(`缺少安装包：${installer}\n请先构建（去掉 --skip-build）。`);
   process.exit(1);

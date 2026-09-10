@@ -87,6 +87,31 @@ src/renderer/  React 界面：styles.css 直接复用 DSM 新版样式，extra.c
 src/shared/    主进程与渲染层共用的类型
 ```
 
+## 更新与发版
+
+仓库：<https://github.com/buyaowangji661-hash/Token>（公开）。自动更新走 **GitHub Releases + electron-updater**。
+
+- **安装版**（`Token-Setup-x.y.z.exe`）：启动 15 秒后静默检查一次，之后每 6 小时一次；发现新版自动下载，
+  设置页「关于」出现「重启并安装 vX.Y.Z」。也可在设置页点「检查更新」、托盘右键「检查更新」手动触发。
+  已下载的更新在退出应用时也会自动装上（`autoInstallOnAppQuit`）。
+- **只发安装版**：`build.win.target` 只有 `nsis`,产物 `Token-Setup-x.y.z.exe`(约 108MB)。
+  便携版已按用户要求删除(既不能自动更新,又让每次上传多 108MB)。
+- **换机/首次使用**：新机器**手动装一次** `Token-Setup-x.y.z.exe`,之后才会自动更新。
+- `appId`（`com.aluzzz.token`）不可更换 —— 换了之后 electron-updater 认不出已装的版本。
+
+发版（在 `D:\Token`）：
+
+```bash
+npm run release              # 升 patch（0.1.1 → 0.1.2）→ 构建 → 上传 Release
+npm run release -- --minor   # 升 minor
+npm run release -- --major   # 升 major
+npm run release -- --no-bump # 版本已手改好，只构建 + 上传
+npm run release -- --skip-build
+```
+
+脚本会校验 `gh` 已登录、`latest.yml` 与安装包存在，然后 `gh release create vX.Y.Z --generate-notes --latest`。
+**没有 `latest.yml` 其他电脑发现不了新版**，所以别手工只传 exe。前提：`gh auth login` 一次即可。
+
 ## v1 不做
 
-订阅额度 / OAuth 探测、多设备同步、WSL 内数据、多账号与 Hermes 多 profile、tokscale 支持的其他 30+ 工具、i18n。
+订阅额度 / OAuth 探测、**用量数据跨机同步**（数据各机本机，只有安装包通过 GitHub 分发）、WSL 内数据、多账号与 Hermes 多 profile、tokscale 支持的其他 30+ 工具、i18n。

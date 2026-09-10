@@ -2,8 +2,6 @@
 
 Windows 托盘版 token 用量监控：Codex / Hermes / Antigravity / Grok 四家本地数据汇总。
 
-界面照搬 [DeepSeekMonitorWindows](https://github.com/Joyi-code/DeepSeekMonitorWindows) 的**新版本 UI**（v1.1.0，含皮肤切换、缓存命中明细、堆叠柱状图）；采集方式参考 [Javis603/token-monitor](https://github.com/Javis603/token-monitor)，即直接调用 tokscale CLI，不自己解析各家会话文件。
-
 ## 数据来源（全部本地，无需 API Key）
 
 | 工具 | 数据位置 | 实测规模 |
@@ -33,14 +31,6 @@ tokscale pricing <model> --json       # 单模型单价
 - 想改回 Grok CLI 自记的开销（`~\.grok\sessions\**\updates.jsonl` 里每条推理自带 `costUsdTicks`，按 1e-9 美元换算）：在 `pricing.json` 里显式写 `grokUseRecordedCost: true`，缺省是关的。
 - 未匹配到价格的模型显示「未定价」，不按 $0 计。
 
-实测差异（全时段）：
-
-| 客户端 | tokscale 的 cost | 自算 |
-|---|---|---|
-| Codex | $2,923 | $2,923.99（一致） |
-| Antigravity | $24.85 | $48.34（目录里 Google 官方价 vs OpenRouter 转售价正好差 2 倍） |
-| Grok | $197.30 | 目录 $111.68 / Grok 自带 $102.20 |
-| Hermes | $1.19 亿 | $17.46 |
 
 ### 价格覆盖表
 
@@ -109,9 +99,5 @@ npm run release -- --no-bump # 版本已手改好，只构建 + 上传
 npm run release -- --skip-build
 ```
 
-脚本会校验 `gh` 已登录、`latest.yml` 与安装包存在，然后 `gh release create vX.Y.Z --generate-notes --latest`。
-**没有 `latest.yml` 其他电脑发现不了新版**，所以别手工只传 exe。前提：`gh auth login` 一次即可。
 
-## v1 不做
 
-订阅额度 / OAuth 探测、**用量数据跨机同步**（数据各机本机，只有安装包通过 GitHub 分发）、WSL 内数据、多账号与 Hermes 多 profile、tokscale 支持的其他 30+ 工具、i18n。

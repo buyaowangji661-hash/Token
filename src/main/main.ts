@@ -236,6 +236,10 @@ function createTray(): void {
 }
 
 function applyAutostart(enabled: boolean): void {
+  // 开发态一律不碰注册表：此时 process.execPath 是 node_modules 里的 electron.exe，
+  // 写进 Run 键的就是「不带应用入口」的裸 Electron ⇒ 每次开机弹出 Electron 默认欢迎页。
+  // 更要命的是 dev 的 app 名可能与安装版同名，关自启时会反向删掉安装版那条。只让打包版写。
+  if (!app.isPackaged) return;
   try {
     app.setLoginItemSettings({ openAtLogin: enabled, path: process.execPath });
   } catch {

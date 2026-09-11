@@ -4,6 +4,12 @@ import path from "node:path";
 import type { AppConfig, Period, ThemeName, UsageResult } from "../shared/types";
 import { DEFAULT_THEME, isThemeName } from "../shared/types";
 import { syncAntigravity } from "./antigravity";
+import {
+  INITIAL_AUTO_HIDE_STATE,
+  stepAutoHide,
+  type AutoHideState,
+  type PanelRect
+} from "./autohide";
 import { configPath, pricingPath, pricingPathExists, readConfig, readPricingFile, writeConfig } from "./config";
 import { catalogStatus, ensureCatalogFresh, refreshCatalog } from "./priceCatalog";
 import { clearPriceCache, getPrice } from "./pricing";
@@ -16,6 +22,10 @@ const WINDOW_WIDTH = 380;
 const WINDOW_HEIGHT = 680;
 /** 显示面板时，数据超过这个岁数就先静默重扫（避免频繁开合面板时反复扫描） */
 const SHOW_REFRESH_STALE_MS = 15_000;
+/** 鼠标「是否离开面板」的轮询间隔：150ms × 4 ≈ 600ms 的判定粒度足够，CPU 代价可忽略 */
+const CURSOR_POLL_MS = 150;
+/** 拖动窗口后多久内暂停自动收起：move 事件在拖动中持续触发，松手后再给一点缓冲 */
+const DRAG_SUSPEND_MS = 400;
 
 let win: BrowserWindow | null = null;
 let tray: Tray | null = null;
@@ -29,6 +39,14 @@ let scanAbort: AbortController | null = null;
 let lastPeriod: Period = "week";
 /** 最近一次扫描完成时刻：用于「显示面板时若数据已陈旧就先刷一次」的判定 */
 let lastScanAt = 0;
+/** 可见面板在窗口内的矩形（渲染层上报，CSS 像素）；null = 还没上报，此时不做自动收起 */
+let panelRect: PanelRect | null = null;
+let autoHideState: AutoHideState = INITIAL_AUTO_HIDE_STATE;
+let autoHideTimer: NodeJS.Timeout | null = null;
+/** 最近一次窗口移动/拖动时刻：拖动期间鼠标必然在面板外，用它暂停自动收起 */
+let lastWindowMoveAt = 0;
+/** 调试用的上一行 [autohide] 日志：只在状态变化时打印，否则 150ms 一行太吵 */
+let lastAutoHideLog = "";
 
 function assetPath(file: string): string {
   return path.join(__dirname, "..", "..", "assets", file);
@@ -40,6 +58,7 @@ function currentConfig(): AppConfig {
     refreshIntervalSeconds: stored.refreshIntervalSeconds,
     autoRefreshEnabled: stored.autoRefreshEnabled,
     autostart: stored.autostart,
+    autoHideOnMouseLeave: stored.autoHideOnMouseLeave,
     theme: stored.theme,
     configPath: configPath(),
     pricingPath: pricingPath(),
@@ -71,6 +90,75 @@ function toggleWindow(): void {
   if (!win) return;
   if (win.isVisible()) win.hide();
   else showWindow();
+}
+
+/**
+ * 「鼠标离开可见面板就收起」的判定。
+ *
+ * 为什么用主进程轮询光标、而不是渲染层的 mouseleave：窗口顶部 `.panel-header` 是
+ * `-webkit-app-region: drag` 的拖动区，鼠标从上方移出时 Chromium 不一定把鼠标事件派发给
+ * 渲染层（该区域被当作窗口标题栏处理）⇒ 纯事件方案会出现「从顶部移开不收起」的漏判。
+ * 轮询只看光标屏幕坐标，与事件派发路径无关。
+ *
+ * 轮询只在窗口可见时跑（hide 就停定时器），每次 tick 重读配置：
+ * 设置页刚关掉开关就立刻生效，重新打开后必须再「进入过面板」才允许收起。
+ */
+function panelRectOnScreen(): PanelRect | null {
+  if (!panelRect || !win) return null;
+  // getBounds() 与 screen.getCursorScreenPoint() 都是 DIP 屏幕坐标；无边框窗口下内容区即窗口
+  const bounds = win.getBounds();
+  return {
+    x: bounds.x + panelRect.x,
+    y: bounds.y + panelRect.y,
+    width: panelRect.width,
+    height: panelRect.height
+  };
+}
+
+function autoHideTick(): void {
+  if (!win) return;
+  if (!readConfig().autoHideOnMouseLeave) {
+    autoHideState = INITIAL_AUTO_HIDE_STATE;
+    return;
+  }
+  const now = Date.now();
+  const cursor = screen.getCursorScreenPoint();
+  const rect = panelRectOnScreen();
+  const result = stepAutoHide(autoHideState, {
+    now,
+    cursor,
+    rect,
+    visible: win.isVisible(),
+    suspended: now - lastWindowMoveAt < DRAG_SUSPEND_MS
+  });
+  autoHideState = result.state;
+  if (process.env.TOKEN_DEBUG_DUMP) {
+    const rectText = rect
+      ? `${Math.round(rect.x)},${Math.round(rect.y)} ${Math.round(rect.width)}x${Math.round(rect.height)}`
+      : "none";
+    // 150ms 一行太吵：只在状态变化时打印
+    const line = `[autohide] rect=${rectText} cursor=${cursor.x},${cursor.y} armed=${autoHideState.armed} outside=${
+      autoHideState.outsideSince === null ? "-" : `${Math.round(now - autoHideState.outsideSince)}ms`
+    }`;
+    if (line !== lastAutoHideLog) {
+      lastAutoHideLog = line;
+      console.log(`${line}${result.hide ? " -> hide" : ""}`);
+    } else if (result.hide) {
+      console.log(`${line} -> hide`);
+    }
+  }
+  if (result.hide) win.hide();
+}
+
+function startAutoHideWatch(): void {
+  if (autoHideTimer) return;
+  autoHideTimer = setInterval(autoHideTick, CURSOR_POLL_MS);
+}
+
+function stopAutoHideWatch(): void {
+  if (autoHideTimer) clearInterval(autoHideTimer);
+  autoHideTimer = null;
+  autoHideState = INITIAL_AUTO_HIDE_STATE;
 }
 
 function createWindow(): void {
@@ -117,6 +205,18 @@ function createWindow(): void {
     }
     if (ageMs < SHOW_REFRESH_STALE_MS) return;
     void runScan(lastPeriod, true);
+  });
+
+  // 鼠标离开可见面板后自动收起：只在面板可见时轮询光标，隐藏即停
+  win.on("show", startAutoHideWatch);
+  win.on("hide", stopAutoHideWatch);
+  // 拖动窗口时鼠标必然在可见面板外（面板跟着窗口走），用 move 事件做「拖动中暂停判定」；
+  // 'moved' 兜底只有结束才触发一次的实现，两条都记，松手后再给 DRAG_SUSPEND_MS 缓冲。
+  win.on("move", () => {
+    lastWindowMoveAt = Date.now();
+  });
+  win.on("moved", () => {
+    lastWindowMoveAt = Date.now();
   });
 
   if (DEV_URL) {
@@ -355,6 +455,30 @@ function registerIpc(): void {
     applyAutostart(Boolean(args.autostart));
     return currentConfig();
   });
+
+  ipcMain.handle("save_auto_hide_on_mouse_leave", (_event, args: { autoHideOnMouseLeave: boolean }) => {
+    writeConfig({ autoHideOnMouseLeave: Boolean(args.autoHideOnMouseLeave) });
+    return currentConfig();
+  });
+
+  /**
+   * 渲染层上报可见面板（.panel / .settings-panel）在**窗口内**的矩形。
+   * 现在面板铺满窗口（extra.css 的 100%×100% 覆盖了 styles.css 的 356×600），所以上报值
+   * 与窗口矩形重合；仍按面板算而不是直接取 getBounds()，是为了边界永远等于用户看得见的那块。
+   * 主进程再加窗口位置换算成屏幕坐标。视图切换 / 尺寸变化时重报。
+   */
+  ipcMain.handle(
+    "report_panel_rect",
+    (_event, args: { x: number; y: number; width: number; height: number } | undefined) => {
+      const values = [args?.x, args?.y, args?.width, args?.height];
+      if (values.length !== 4 || !values.every((value) => typeof value === "number" && Number.isFinite(value))) {
+        return false;
+      }
+      const [x, y, width, height] = values as [number, number, number, number];
+      panelRect = { x, y, width, height };
+      return true;
+    }
+  );
 
   ipcMain.handle("save_theme", (_event, args: { theme: ThemeName }) => {
     // 非法 id（旧版本/手改配置）不写入，避免把坏值落盘后渲染层读回一个空白皮肤

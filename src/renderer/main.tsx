@@ -14,6 +14,7 @@ import {
   FolderOpen,
   Info,
   Layers,
+  MousePointerClick,
   Power,
   RefreshCw,
   Settings as SettingsIcon,
@@ -227,6 +228,44 @@ function App() {
     void listen<UpdateStatus>("update-status", (event) => setUpdate(event.payload)).then((off) => offs.push(off));
     return () => offs.forEach((off) => off());
   }, [loadUsage]);
+
+  // 主进程按「光标是否还在可见面板内」决定自动收起，面板边界由渲染层上报。
+  // 当前面板铺满窗口（extra.css 的 100% 覆盖了 styles.css 的 356×600），两者重合；
+  // 之所以不直接取窗口 bounds，是让边界跟着可见面板走。视图切换会换成另一块面板 ⇒ 依赖 view 重报。
+  React.useEffect(() => {
+    const findPanel = () => document.querySelector(".panel, .settings-panel");
+    const report = () => {
+      const panel = findPanel();
+      if (!panel) return;
+      const rect = panel.getBoundingClientRect();
+      void invoke("report_panel_rect", {
+        x: rect.left,
+        y: rect.top,
+        width: rect.width,
+        height: rect.height
+      }).catch(() => undefined);
+    };
+    report();
+    const panel = findPanel();
+    const observer = panel ? new ResizeObserver(report) : null;
+    if (panel && observer) observer.observe(panel);
+    window.addEventListener("resize", report);
+    return () => {
+      observer?.disconnect();
+      window.removeEventListener("resize", report);
+    };
+  }, [view]);
+
+  // Esc 收起面板（与点 ✕ 同效）；皮肤菜单等浮层开着时由浮层自己处理，这里让路
+  React.useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+      if (document.querySelector(".skin-menu")) return;
+      void invoke("hide_main_window").catch(() => undefined);
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, []);
 
   const pickTheme = React.useCallback((next: ThemeName) => {
     setTheme(next);
@@ -757,6 +796,7 @@ function SettingsPanel({
   const refresh = config?.refreshIntervalSeconds ?? 300;
   const autoRefresh = config?.autoRefreshEnabled ?? true;
   const autostart = config?.autostart ?? false;
+  const autoHide = config?.autoHideOnMouseLeave ?? true;
 
   const save = React.useCallback(
     (channel: string, args: Record<string, unknown>) => {
@@ -873,6 +913,15 @@ function SettingsPanel({
             label="登录时自动启动"
             checked={autostart}
             onChange={(value) => save("save_autostart", { autostart: value })}
+          />
+        </SettingsSection>
+
+        <SettingsSection icon={<MousePointerClick size={15} />} title="面板行为">
+          <p>鼠标移开面板约 0.6 秒后自动收起；任何时候按 Esc 也能收起面板。</p>
+          <Toggle
+            label="鼠标移开自动隐藏"
+            checked={autoHide}
+            onChange={(value) => save("save_auto_hide_on_mouse_leave", { autoHideOnMouseLeave: value })}
           />
         </SettingsSection>
 

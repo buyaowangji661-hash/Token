@@ -107,6 +107,8 @@ export type AppConfig = {
   refreshIntervalSeconds: number;
   autoRefreshEnabled: boolean;
   autostart: boolean;
+  /** 鼠标离开可见面板约 0.6 秒后自动收起面板（默认开） */
+  autoHideOnMouseLeave: boolean;
   theme: ThemeName;
   configPath: string;
   pricingPath: string;

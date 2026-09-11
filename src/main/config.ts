@@ -8,6 +8,8 @@ export type StoredConfig = {
   refreshIntervalSeconds: number;
   autoRefreshEnabled: boolean;
   autostart: boolean;
+  /** 鼠标离开可见面板后自动收起（缺字段按 true，老机器不必写迁移） */
+  autoHideOnMouseLeave: boolean;
   theme: ThemeName;
   /** 已完成「旧默认 5 分钟 → 1 分钟」一次性迁移的标记，避免反复覆盖用户后来的选择 */
   refreshMigrated?: boolean;
@@ -18,6 +20,8 @@ const DEFAULTS: StoredConfig = {
   refreshIntervalSeconds: 60,
   autoRefreshEnabled: true,
   autostart: false,
+  // 默认开：面板弹出后鼠标移开就该消失，不想要可以在设置页关掉
+  autoHideOnMouseLeave: true,
   // 默认浅色皮肤；用户选过皮肤后以 config.json 存的为准
   theme: DEFAULT_THEME
 };
@@ -52,6 +56,10 @@ export function readConfig(): StoredConfig {
     autoRefreshEnabled:
       typeof parsed.autoRefreshEnabled === "boolean" ? parsed.autoRefreshEnabled : DEFAULTS.autoRefreshEnabled,
     autostart: typeof parsed.autostart === "boolean" ? parsed.autostart : DEFAULTS.autostart,
+    autoHideOnMouseLeave:
+      typeof parsed.autoHideOnMouseLeave === "boolean"
+        ? parsed.autoHideOnMouseLeave
+        : DEFAULTS.autoHideOnMouseLeave,
     // 缺失、非法或旧版本写坏的值一律回落到默认皮肤
     theme: isThemeName(parsed.theme) ? parsed.theme : DEFAULTS.theme,
     refreshMigrated: parsed.refreshMigrated === true

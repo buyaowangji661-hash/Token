@@ -9,7 +9,8 @@ import { runTokscale } from "./tokscale";
  * 实测：语言服务器没开时这个命令也会正常返回（~0.4s，抓到 0 条），不会挂起；
  * 所以「启动时跑一次 + 每 6 小时跑一次」是安全的。
  */
-const SYNC_TIMEOUT_MS = 60_000;
+const SYNC_TIMEOUT_MS = 15_000;
+const MIN_INTERVAL_MS = 30_000;
 
 export type AntigravitySyncResult = {
   ok: boolean;
@@ -20,27 +21,49 @@ export type AntigravitySyncResult = {
 };
 
 let running: Promise<AntigravitySyncResult> | null = null;
+let lastSyncAt = 0;
+let lastSuccessAt = 0;
+let lastCachedSessions: number | null = null;
 
-export function syncAntigravity(): Promise<AntigravitySyncResult> {
+export function getLastAntigravitySyncAt(): number {
+  return lastSuccessAt;
+}
+
+export function syncAntigravity(force = false): Promise<AntigravitySyncResult> {
+  const now = Date.now();
+  if (!force && now - lastSyncAt < MIN_INTERVAL_MS) {
+    return Promise.resolve({
+      ok: true,
+      ms: 0,
+      cachedSessions: lastCachedSessions,
+      detail: "跳过（30 秒冷却内）"
+    });
+  }
+
   if (running) return running;
+  lastSyncAt = now;
+
   running = (async (): Promise<AntigravitySyncResult> => {
     const started = Date.now();
     try {
       const out = await runTokscale(["antigravity", "sync"], { timeoutMs: SYNC_TIMEOUT_MS });
       const match =
         /cached sessions after sync:\s*(\d+)/i.exec(out) ?? /cached sessions:\s*(\d+)/i.exec(out);
+      const count = match ? Number(match[1]) : null;
       const tail = out.trim().split("\n").filter(Boolean).slice(-1)[0] ?? "";
+      lastSuccessAt = Date.now();
+      if (count !== null) lastCachedSessions = count;
       return {
         ok: true,
         ms: Date.now() - started,
-        cachedSessions: match ? Number(match[1]) : null,
+        cachedSessions: count,
         detail: tail.trim()
       };
     } catch (error) {
       return {
         ok: false,
         ms: Date.now() - started,
-        cachedSessions: null,
+        cachedSessions: lastCachedSessions,
         detail: error instanceof Error ? error.message : String(error)
       };
     }

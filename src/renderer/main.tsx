@@ -179,9 +179,9 @@ function App() {
     document.documentElement.setAttribute("data-theme", theme);
   }, [theme]);
 
-  const loadUsage = React.useCallback((next: Period) => {
+  const loadUsage = React.useCallback((next: Period, sync = false) => {
     setLoadState("loading");
-    invoke<UsageResult | null>("fetch_usage", { period: next })
+    invoke<UsageResult | null>("fetch_usage", { period: next, sync })
       .then((result) => {
         if (!result) return;
         setUsage(result);
@@ -224,7 +224,7 @@ function App() {
       setLoadError(String(event.payload));
     }).then((off) => offs.push(off));
     void listen<ViewName>("navigate", (event) => setView(event.payload)).then((off) => offs.push(off));
-    void listen<null>("refresh-requested", () => loadUsage(periodRef.current)).then((off) => offs.push(off));
+    void listen<null>("refresh-requested", () => loadUsage(periodRef.current, true)).then((off) => offs.push(off));
     void listen<UpdateStatus>("update-status", (event) => setUpdate(event.payload)).then((off) => offs.push(off));
     return () => offs.forEach((off) => off());
   }, [loadUsage]);
@@ -297,8 +297,13 @@ function App() {
           activeClient={activeClient}
           theme={theme}
           onPeriod={setPeriod}
-          onSelectClient={setActiveClient}
-          onRefresh={() => loadUsage(period)}
+          onSelectClient={(id) => {
+            setActiveClient(id);
+            if (id === "antigravity") {
+              void invoke("sync_antigravity", { force: false }).catch(() => undefined);
+            }
+          }}
+          onRefresh={() => loadUsage(period, true)}
           onPickTheme={pickTheme}
           onSettings={() => setView("settings")}
           onClose={() => void invoke("hide_main_window").catch(() => undefined)}

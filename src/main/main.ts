@@ -197,6 +197,13 @@ function createWindow(): void {
   // 那样写等于这次刷新基本不会触发。改用固定 15 秒下限，只在开合很频繁时省掉重复扫描。
   // 启动首发不在此列（lastScanAt 还是 0），首屏由渲染层自己的 fetch_usage 负责，避免重复扫两遍。
   win.on("show", () => {
+    // 每次打开面板时，尝试在后台静默抓取一次 Antigravity（内置 30 秒冷却，不重复开销）
+    void syncAntigravity(false).then((res) => {
+      if (res.ok && res.cachedSessions !== null) {
+        void runScan(lastPeriod, true);
+      }
+    });
+
     if (lastScanAt === 0) return;
     if (!readConfig().autoRefreshEnabled) return;
     const ageMs = Date.now() - lastScanAt;
@@ -305,8 +312,10 @@ function createTray(): void {
         label: "立即刷新",
         click: () => {
           showWindow();
-          win?.webContents.send("navigate", "dashboard");
-          win?.webContents.send("refresh-requested");
+          void syncAntigravity(true).finally(() => {
+            win?.webContents.send("navigate", "dashboard");
+            win?.webContents.send("refresh-requested");
+          });
         }
       },
       { type: "separator" },
@@ -387,6 +396,7 @@ function scheduleRefresh(): void {
   }, intervalMs);
 }
 
+const FIFTEEN_MINUTES_MS = 15 * 60 * 1000;
 const SIX_HOURS_MS = 6 * 60 * 60 * 1000;
 
 /**
@@ -398,7 +408,7 @@ function scheduleMaintenance(): void {
 
   // Antigravity：只存在于运行中的语言服务器里，必须主动 sync 才有数据
   kickoff(() => {
-    void syncAntigravity().then((result) => {
+    void syncAntigravity(true).then((result) => {
       if (process.env.TOKEN_DEBUG_DUMP) {
         console.log(
           `[antigravity] sync ok=${result.ok} sessions=${result.cachedSessions} ${result.ms}ms ${result.detail}`
@@ -409,11 +419,11 @@ function scheduleMaintenance(): void {
     });
     if (antigravityTimer) clearInterval(antigravityTimer);
     antigravityTimer = setInterval(() => {
-      void syncAntigravity().then((result) => {
-        if (result.ok) void runScan(lastPeriod, true);
+      void syncAntigravity(false).then((result) => {
+        if (result.ok && result.cachedSessions !== null) void runScan(lastPeriod, true);
       });
-    }, SIX_HOURS_MS);
-  }, 8_000);
+    }, FIFTEEN_MINUTES_MS);
+  }, 3_000);
 
   // 定价目录：后台真联网刷新，失败就把时间戳续上（切档路径永远不碰网络）
   kickoff(() => {
@@ -432,9 +442,18 @@ function scheduleMaintenance(): void {
 function registerIpc(): void {
   ipcMain.handle("get_app_config", () => ({ ...currentConfig(), update: updateStatus() }));
 
-  ipcMain.handle("fetch_usage", async (_event, args: { period?: Period } | undefined) => {
+  ipcMain.handle("sync_antigravity", async (_event, args: { force?: boolean } | undefined) => {
+    const res = await syncAntigravity(args?.force ?? true);
+    if (res.ok) void runScan(lastPeriod, true);
+    return res;
+  });
+
+  ipcMain.handle("fetch_usage", async (_event, args: { period?: Period; sync?: boolean } | undefined) => {
     const period: Period = args?.period ?? "month";
     lastPeriod = period;
+    if (args?.sync) {
+      await syncAntigravity(true).catch(() => undefined);
+    }
     return runScan(period, false);
   });
 
